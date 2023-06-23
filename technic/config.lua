@@ -4,9 +4,9 @@ local defaults = {
 	-- Power tools enabled
 	enable_cans = "true",
 	enable_chainsaw = "true",
-	enable_flashlight = "false",
+	enable_flashlight = "true",
 	enable_mining_drill = "true",
-	enable_mining_laser = "false",
+	enable_mining_laser = "true",
 	enable_multimeter = "true",
 	enable_prospector = "true",
 	enable_sonic_screwdriver = "true",

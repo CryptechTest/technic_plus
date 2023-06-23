@@ -321,10 +321,6 @@ local function calculate_object_center(object)
 	return {x=0, y=0, z=0}
 end
 
-local function radiation_sound(object, dmg)
-	return radiation_sound(object, dmg, false)
-end
-
 local function radiation_sound(object, dmg, force)
 	local played = false
 	if (object:is_player() and object:get_hp() > 0) then
@@ -361,7 +357,7 @@ local function dmg_object(pos, object, strength)
 	local sound_played = false
 	-- 3d armor hook
 	if minetest.get_modpath("3d_armor") and radiated then
-		sound_played = radiation_sound(object, dmg)
+		sound_played = radiation_sound(object, dmg, false)
 		-- damage armor..
 		local _, armor_inv = armor.get_valid_player(armor, object, "[technic]")
 		if armor_inv then
