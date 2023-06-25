@@ -42,7 +42,7 @@ if minetest.get_modpath("dye") then
 		table.insert(dye_recipes, {"ethereal:willow_twig 12", "technic:aspirin_pill"})
 	end
 
-	if minetest.get_modpath("farming") then
+	if minetest.get_modpath("farming") and not minetest.get_modpath("x_farming") then
 		-- Dyes ---
 		-- better recipes for farming's crafting methods (twice the output)
 		table.insert(dye_recipes, {"farming:chili_pepper", "dye:red 4"})
