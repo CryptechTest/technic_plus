@@ -24,7 +24,10 @@ minetest.register_node("technic:dummy_light_source", {
 	diggable = false,
 	pointable = false,
 	--drop = "",  -- Intentionally allowed to drop itself
-	groups = {not_in_creative_inventory = 1}
+	groups = {not_in_creative_inventory = 1},
+	on_blast = function() end,
+	on_destruct = function () end,
+	can_dig = function() return false end,
 })
 
 local cid_light = minetest.get_content_id("technic:dummy_light_source")
