@@ -4,10 +4,10 @@
 
 local S = technic.getter
 
-local desc = S("@1 LED", S("LV"))
-local active_desc = S("@1 Active", desc)
-local unpowered_desc = S("@1 Unpowered", desc)
 local demand = 5
+local desc = S("@1 LED", S("LV"))
+local active_desc = S("@1 Active", desc).."\n"..S("Demand: @1", technic.EU_string(demand))
+local unpowered_desc = S("@1 Unpowered", desc)
 
 
 local function led_run(pos, node)
@@ -41,7 +41,9 @@ minetest.register_node("technic:lv_led", {
 	tiles = {"technic_lv_led.png"},
 	inventory_image = "technic_lv_led_inv.png",
 	sunlight_propagates = true,
-	groups = {cracky = 2, technic_machine = 1, technic_lv = 1},
+	groups = {cracky = 2, technic_machine = 1, technic_lv = 1, pickaxey = 2},
+	_mcl_blast_resistance = 1,
+	_mcl_hardness = 0.8,
 	connect_sides = {"front", "back", "left", "right", "top", "bottom"},
 	can_dig = technic.machine_can_dig,
 	technic_run = led_run,
@@ -73,7 +75,9 @@ minetest.register_node("technic:lv_led_active", {
 	light_source = 9,
 	drop = "technic:lv_led",
 	sunlight_propagates = true,
-	groups = {cracky = 2, technic_machine = 1, technic_lv = 1, not_in_creative_inventory = 1},
+	groups = {cracky = 2, technic_machine = 1, technic_lv = 1, not_in_creative_inventory = 1, pickaxey = 2},
+	_mcl_blast_resistance = 1,
+	_mcl_hardness = 0.8,
 	connect_sides = {"front", "back", "left", "right", "top", "bottom"},
 	can_dig = technic.machine_can_dig,
 	technic_run = led_run,
@@ -88,8 +92,9 @@ technic.register_machine("LV", "technic:lv_led_active", technic.receiver)
 minetest.register_craft({
 	output = "technic:lv_led 2",
 	recipe = {
-		{"", "homedecor:plastic_sheeting", ""},
-		{"homedecor:plastic_sheeting", "technic:doped_silicon_wafer", "homedecor:plastic_sheeting"},
-		{"", "technic:fine_silver_wire", ""},
-	}
+		{"", "basic_materials:plastic_sheet", ""},
+		{"basic_materials:plastic_sheet", "technic:doped_silicon_wafer", "basic_materials:plastic_sheet"},
+		{"", "basic_materials:silver_wire", ""},
+	},
+	replacements = {{"basic_materials:silver_wire", "basic_materials:empty_spool"}},
 })

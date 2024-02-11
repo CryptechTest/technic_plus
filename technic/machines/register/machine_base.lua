@@ -44,7 +44,7 @@ function technic.register_base_machine(nodename, data)
 	local infotext_active = S("@1 Active", def.description)
 	local infotext_unpowered = S("@1 Unpowered", def.description)
 
-	local groups = {cracky = 2, technic_machine = 1, ["technic_"..ltier] = 1}
+	local groups = {cracky = 2, technic_machine = 1, ["technic_"..ltier] = 1, pickaxey=2}
 	if def.tube then
 		groups.tubedevice = 1
 		groups.tubedevice_receiver = 1
@@ -52,25 +52,50 @@ function technic.register_base_machine(nodename, data)
 	local active_groups = table.copy(groups)
 	active_groups.not_in_creative_inventory = 1
 
+	local size = minetest.get_modpath("mcl_formspec") and "size[9,10]" or "size[8,9]"
 	local formspec =
-		"size[8,9;]"..
+		size..
 		"list[context;src;"..(4-input_size)..",1;"..input_size..",1;]"..
 		"list[context;dst;5,1;2,2;]"..
-		"list[current_player;main;0,5;8,4;]"..
-		"label[0,0;"..def.description.."]"..
-		"listring[context;dst]"..
-		"listring[current_player;main]"..
-		"listring[context;src]"..
-		"listring[current_player;main]"
+		"label[0,0;"..def.description.."]"
 	if def.upgrade then
 		formspec = formspec..
 			"list[context;upgrade1;1,3;1,1;]"..
 			"list[context;upgrade2;2,3;1,1;]"..
-			"label[1,4;"..S("Upgrade Slots").."]"..
-			"listring[context;upgrade1]"..
-			"listring[current_player;main]"..
-			"listring[context;upgrade2]"..
-			"listring[current_player;main]"
+			"label[1,4;"..S("Upgrade Slots").."]"
+	end
+
+	if minetest.get_modpath("mcl_formspec") then
+		formspec = formspec..
+			mcl_formspec.get_itemslot_bg(4-input_size,1,input_size,1)..
+			mcl_formspec.get_itemslot_bg(5,1,2,2)..
+			-- player inventory
+			"list[current_player;main;0,5.5;9,3;9]"..
+			mcl_formspec.get_itemslot_bg(0,5.5,9,3)..
+			"list[current_player;main;0,8.74;9,1;]"..
+			mcl_formspec.get_itemslot_bg(0,8.74,9,1)
+		if def.upgrade then
+			formspec = formspec..
+			mcl_formspec.get_itemslot_bg(1,3,1,1)..
+			mcl_formspec.get_itemslot_bg(2,3,1,1)
+		end
+	else
+		formspec = formspec..
+			"list[current_player;main;0,5;8,4;]"
+	end
+
+	-- listrings
+	formspec = formspec..
+	"listring[context;dst]"..
+	"listring[current_player;main]"..
+	"listring[context;src]"..
+	"listring[current_player;main]"
+	if def.upgrade then
+		formspec = formspec..
+		"listring[context;upgrade1]"..
+		"listring[current_player;main]"..
+		"listring[context;upgrade2]"..
+		"listring[current_player;main]"
 	end
 
 	local tube = technic.new_default_tube()
@@ -107,8 +132,8 @@ function technic.register_base_machine(nodename, data)
 			meta:set_int("src_time", meta:get_int("src_time") + round(def.speed*10))
 		end
 		while true do
-			local result = inv:get_list("src") and technic.get_recipe(typename, inv:get_list("src"))
-			if not result then
+			local recipe = inv:get_list("src") and technic.get_recipe(typename, inv:get_list("src"))
+			if not recipe then
 				technic.swap_node(pos, nodename)
 				meta:set_string("infotext", infotext_idle)
 				meta:set_int(tier.."_EU_demand", 0)
@@ -117,40 +142,23 @@ function technic.register_base_machine(nodename, data)
 			end
 			meta:set_int(tier.."_EU_demand", machine_demand[EU_upgrade+1])
 			technic.swap_node(pos, nodename.."_active")
-			meta:set_string("infotext", infotext_active)
-			if meta:get_int("src_time") < round(result.time*10) then
+			meta:set_string("infotext", infotext_active .. "\n" ..
+			S("Demand: @1", technic.EU_string(machine_demand[EU_upgrade+1])))
+			if meta:get_int("src_time") < round(recipe.time*10) then
 				if not powered then
 					technic.swap_node(pos, nodename)
 					meta:set_string("infotext", infotext_unpowered)
 				end
 				return
 			end
-			local output = result.output
-			if type(output) ~= "table" then output = { output } end
-			local output_stacks = {}
-			for _, o in ipairs(output) do
-				table.insert(output_stacks, ItemStack(o))
-			end
-			local room_for_output = true
-			inv:set_size("dst_tmp", inv:get_size("dst"))
-			inv:set_list("dst_tmp", inv:get_list("dst"))
-			for _, o in ipairs(output_stacks) do
-				if not inv:room_for_item("dst_tmp", o) then
-					room_for_output = false
-					break
-				end
-				inv:add_item("dst_tmp", o)
-			end
-			if not room_for_output then
+			if not technic.process_recipe(recipe, inv) then
 				technic.swap_node(pos, nodename)
 				meta:set_string("infotext", infotext_idle)
 				meta:set_int(tier.."_EU_demand", 0)
-				meta:set_int("src_time", round(result.time*10))
+				meta:set_int("src_time", round(recipe.time*10))
 				return
 			end
-			meta:set_int("src_time", meta:get_int("src_time") - round(result.time*10))
-			inv:set_list("src", result.new_input)
-			inv:set_list("dst", inv:get_list("dst_tmp"))
+			meta:set_int("src_time", meta:get_int("src_time") - round(recipe.time*10))
 		end
 	end
 
@@ -171,10 +179,12 @@ function technic.register_base_machine(nodename, data)
 		},
 		paramtype2 = "facedir",
 		groups = groups,
+		_mcl_blast_resistance = 1,
+		_mcl_hardness = 0.8,
 		tube = def.tube and tube or nil,
 		connect_sides = def.connect_sides or connect_default,
 		legacy_facedir_simple = true,
-		sounds = default.node_sound_wood_defaults(),
+		sounds = technic.sounds.node_sound_wood_defaults(),
 		on_construct = function(pos)
 			local node = minetest.get_node(pos)
 			local meta = minetest.get_meta(pos)
@@ -243,9 +253,11 @@ function technic.register_base_machine(nodename, data)
 		paramtype2 = "facedir",
 		drop = nodename,
 		groups = active_groups,
+		_mcl_blast_resistance = 1,
+		_mcl_hardness = 0.8,
 		connect_sides = def.connect_sides or connect_default,
 		legacy_facedir_simple = true,
-		sounds = default.node_sound_wood_defaults(),
+		sounds = technic.sounds.node_sound_wood_defaults(),
 		tube = def.tube and tube or nil,
 		can_dig = technic.machine_can_dig,
 		allow_metadata_inventory_put = technic.machine_inventory_put,

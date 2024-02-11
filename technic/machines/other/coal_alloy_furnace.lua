@@ -2,25 +2,44 @@
 -- Fuel driven alloy furnace. This uses no EUs:
 
 local S = technic.getter
+local mat = technic.materials
 
 minetest.register_craft({
 	output = 'technic:coal_alloy_furnace',
 	recipe = {
-		{'default:brick', 'default:brick', 'default:brick'},
-		{'default:brick', '',              'default:brick'},
-		{'default:brick', 'default:brick', 'default:brick'},
+		{mat.brick, mat.brick, mat.brick},
+		{mat.brick, '',              mat.brick},
+		{mat.brick, mat.brick, mat.brick},
 	}
 })
 
 local machine_name = S("Fuel-Fired Alloy Furnace")
+local size = minetest.get_modpath("mcl_formspec") and "size[9,9]" or "size[8,9]"
 local formspec =
-	"size[8,9]"..
+	size..
 	"label[0,0;"..machine_name.."]"..
 	"image[2,2;1,1;default_furnace_fire_bg.png]"..
 	"list[context;fuel;2,3;1,1;]"..
 	"list[context;src;2,1;2,1;]"..
-	"list[context;dst;5,1;2,2;]"..
-	"list[current_player;main;0,5;8,4;]"..
+	"list[context;dst;5,1;2,2;]"
+
+if minetest.get_modpath("mcl_formspec") then
+	formspec = formspec..
+	mcl_formspec.get_itemslot_bg(2,3,1,1)..
+	mcl_formspec.get_itemslot_bg(2,1,2,1)..
+	mcl_formspec.get_itemslot_bg(5,1,2,2)..
+	-- player inventory
+	"list[current_player;main;0,4.5;9,3;9]"..
+	mcl_formspec.get_itemslot_bg(0,4.5,9,3)..
+	"list[current_player;main;0,7.74;9,1;]"..
+	mcl_formspec.get_itemslot_bg(0,7.74,9,1)
+else
+	formspec = formspec..
+	"list[current_player;main;0,5;8,4;]"
+end
+
+-- listrings
+formspec = formspec..
 	"listring[context;dst]"..
 	"listring[current_player;main]"..
 	"listring[context;src]"..
@@ -34,9 +53,11 @@ minetest.register_node("technic:coal_alloy_furnace", {
 	         "technic_coal_alloy_furnace_side.png", "technic_coal_alloy_furnace_side.png",
 	         "technic_coal_alloy_furnace_side.png", "technic_coal_alloy_furnace_front.png"},
 	paramtype2 = "facedir",
-	groups = {cracky=2},
+	groups = {cracky=2, pickaxey=2},
+	_mcl_blast_resistance = 1,
+	_mcl_hardness = 0.8,
 	legacy_facedir_simple = true,
-	sounds = default.node_sound_stone_defaults(),
+	sounds = technic.sounds.node_sound_stone_defaults(),
 	on_construct = function(pos)
 		local meta = minetest.get_meta(pos)
 		meta:set_string("formspec", formspec)
@@ -60,9 +81,11 @@ minetest.register_node("technic:coal_alloy_furnace_active", {
 	paramtype2 = "facedir",
 	light_source = 8,
 	drop = "technic:coal_alloy_furnace",
-	groups = {cracky=2, not_in_creative_inventory=1},
+	groups = {cracky=2, not_in_creative_inventory=1, pickaxey=2},
+	_mcl_blast_resistance = 1,
+	_mcl_hardness = 0.8,
 	legacy_facedir_simple = true,
-	sounds = default.node_sound_stone_defaults(),
+	sounds = technic.sounds.node_sound_stone_defaults(),
 	can_dig = technic.machine_can_dig,
 	allow_metadata_inventory_put = technic.machine_inventory_put,
 	allow_metadata_inventory_take = technic.machine_inventory_take,
@@ -95,22 +118,18 @@ minetest.register_abm({
 		end
 
 		-- Get what to cook if anything
-		local result = technic.get_recipe("alloy", inv:get_list("src"))
+		local recipe = technic.get_recipe("alloy", inv:get_list("src"))
 
 		local was_active = false
 
 		if meta:get_float("fuel_time") < meta:get_float("fuel_totaltime") then
 			was_active = true
 			meta:set_int("fuel_time", meta:get_int("fuel_time") + 1)
-			if result then
+			if recipe then
 				meta:set_int("src_time", meta:get_int("src_time") + 1)
-				if meta:get_int("src_time") >= result.time then
+				if meta:get_int("src_time") >= recipe.time then
 					meta:set_int("src_time", 0)
-					local result_stack = ItemStack(result.output)
-					if inv:room_for_item("dst", result_stack) then
-						inv:set_list("src", result.new_input)
-						inv:add_item("dst", result_stack)
-					end
+					technic.process_recipe(recipe, inv)
 				end
 			else
 				meta:set_int("src_time", 0)
@@ -123,14 +142,26 @@ minetest.register_abm({
 			meta:set_string("infotext", S("@1 Active", machine_name).." ("..percent.."%)")
 			technic.swap_node(pos, "technic:coal_alloy_furnace_active")
 			meta:set_string("formspec",
-					"size[8,9]"..
+					size..
 					"label[0,0;"..machine_name.."]"..
 					"image[2,2;1,1;default_furnace_fire_bg.png^[lowpart:"..
 					(100 - percent)..":default_furnace_fire_fg.png]"..
 					"list[context;fuel;2,3;1,1;]"..
 					"list[context;src;2,1;2,1;]"..
 					"list[context;dst;5,1;2,2;]"..
-					"list[current_player;main;0,5;8,4;]"..
+
+					(minetest.get_modpath("mcl_formspec") and
+						mcl_formspec.get_itemslot_bg(2,3,1,1)..
+						mcl_formspec.get_itemslot_bg(2,1,2,1)..
+						mcl_formspec.get_itemslot_bg(5,1,2,2)..
+						-- player inventory
+						"list[current_player;main;0,4.5;9,3;9]"..
+						mcl_formspec.get_itemslot_bg(0,4.5,9,3)..
+						"list[current_player;main;0,7.74;9,1;]"..
+						mcl_formspec.get_itemslot_bg(0,7.74,9,1)
+					or "list[current_player;main;0,5;8,4;]")..
+
+					-- listrings
 					"listring[context;dst]"..
 					"listring[current_player;main]"..
 					"listring[context;src]"..
@@ -140,9 +171,7 @@ minetest.register_abm({
 			return
 		end
 
-		local recipe = technic.get_recipe("alloy", inv:get_list("src"))
-
-		if not recipe then
+		if not technic.get_recipe("alloy", inv:get_list("src")) then
 			if was_active then
 				meta:set_string("infotext", S("@1 is empty", machine_name))
 				technic.swap_node(pos, "technic:coal_alloy_furnace")

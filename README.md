@@ -6,7 +6,6 @@ A mod for [minetest](http://www.minetest.net)
 ![integration-test](https://github.com/mt-mods/technic/workflows/integration-test/badge.svg)
 ![luacheck](https://github.com/mt-mods/technic/workflows/luacheck/badge.svg)
 ![mineunit](https://github.com/mt-mods/technic/workflows/mineunit/badge.svg)
-![mtinfo](https://github.com/mt-mods/technic/workflows/mtinfo/badge.svg)
 ![](https://byob.yarr.is/mt-mods/technic/coverage)
 
 [![License](https://img.shields.io/badge/license-LGPLv2.0%2B-purple.svg)](https://www.gnu.org/licenses/old-licenses/lgpl-2.0.en.html)
@@ -39,7 +38,6 @@ their own manuals:
 * [Pipeworks Documentation](https://github.com/mt-mods/pipeworks/-/wikis/home)
 * [Moreores Forum Post](https://forum.minetest.net/viewtopic.php?t=549)
 * [Basic materials Repository](https://github.com/mt-mods/basic_materials)
-* [mtinfo generated documentation](https://mt-mods.github.io/technic/#/mods/technic/items)
 
 Recipes for constructable items in technic are generally not guessable,
 and are also not specifically documented here.  You should use a
@@ -98,11 +96,14 @@ Suitable for multiplayer environments.
 ## Compatibility
 
 This mod is meant as a **drop-in replacement** for the upstream `technic` mod.
+
 It also provides some additional machines and items, notably:
 
 * HV Grinder, Furnace, and Compressor
 * LV Lamp
 * LV, MV, and HV Digiline cables
+
+Note that the `wrench` mod has been separated from the modpack. It can now be found at [mt-mods/wrench](https://github.com/mt-mods/wrench).
 
 # Recommended mods
 
@@ -129,7 +130,6 @@ Recommended mods that build on the `technic mod`:
 | enable_mining_drill                          |                                                                                                                       |
 | enable_mining_laser                          |                                                                                                                       |
 | enable_flashlight                            |                                                                                                                       |
-| enable_wrench_crafting                       | enable recipe for wrench                                                                                              |
 | enable_wind_mill                             |                                                                                                                       |
 | enable_frames                                |                                                                                                                       |
 | enable_corium_griefing                       |                                                                                                                       |

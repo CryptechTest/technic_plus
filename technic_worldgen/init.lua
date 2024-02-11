@@ -2,15 +2,22 @@
 local modpath = minetest.get_modpath("technic_worldgen")
 
 technic = rawget(_G, "technic") or {}
-technic.worldgen = {
-	gettext = minetest.get_translator(minetest.get_current_modname())
-}
+
+technic.sounds = {}
+if minetest.get_modpath("default") then
+	technic.sounds = default
+end
+if minetest.get_modpath("mcl_sounds") then
+	technic.sounds = mcl_sounds
+end
 
 dofile(modpath.."/config.lua")
 dofile(modpath.."/nodes.lua")
 dofile(modpath.."/oregen.lua")
 dofile(modpath.."/crafts.lua")
-dofile(modpath.."/overrides.lua")
+if minetest.get_modpath("default") then
+	dofile(modpath.."/overrides.lua")
+end
 
 -- Rubber trees, moretrees also supplies these
 if not minetest.get_modpath("moretrees") then
@@ -26,9 +33,20 @@ if minetest.get_modpath("mg") then
 	dofile(modpath.."/mg.lua")
 end
 
-minetest.register_alias("technic:wrought_iron_ingot", "default:steel_ingot")
 minetest.register_alias("technic:uranium", "technic:uranium_lump")
-minetest.register_alias("technic:wrought_iron_block", "default:steelblock")
-minetest.register_alias("technic:diamond_block", "default:diamondblock")
-minetest.register_alias("technic:diamond", "default:diamond")
-minetest.register_alias("technic:mineral_diamond", "default:stone_with_diamond")
+
+if minetest.get_modpath("default") then
+	minetest.register_alias("technic:wrought_iron_ingot", "default:steel_ingot")
+	minetest.register_alias("technic:wrought_iron_block", "default:steelblock")
+	minetest.register_alias("technic:diamond_block", "default:diamondblock")
+	minetest.register_alias("technic:diamond", "default:diamond")
+	minetest.register_alias("technic:mineral_diamond", "default:stone_with_diamond")
+end
+
+if minetest.get_modpath("mcl_core") then
+	minetest.register_alias("technic:wrought_iron_ingot", "mcl_core:iron_ingot")
+	minetest.register_alias("technic:wrought_iron_block", "mcl_core:ironblock")
+	minetest.register_alias("technic:diamond_block", "mcl_core:diamondblock")
+	minetest.register_alias("technic:diamond", "mcl_core:diamond")
+	minetest.register_alias("technic:mineral_diamond", "mcl_core:stone_with_diamond")
+end
